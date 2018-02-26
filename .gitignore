@@ -1,0 +1,13 @@
+.qmake.stash
+qrtorrent
+qrtorrent.pro.user
+*.o
+moc_*
+ui_*
+error.log
+Makefile*
+test.key
+test.csr
+test.crt
+test.pem
+Session.vim

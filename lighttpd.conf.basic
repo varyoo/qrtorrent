@@ -1,0 +1,13 @@
+include "lighttpd.conf"
+
+server.modules += ( "mod_auth" )
+auth.backend = "plain"
+auth.backend.plain.userfile = "htpasswd.exemple"
+auth.debug = 2
+auth.require = ( "" =>
+    (
+        "method" => "basic",
+        "realm" => "Password protected area",
+        "require" => "user=user"
+    )
+)
