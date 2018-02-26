@@ -127,9 +127,9 @@ inline void Client::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i)
 {
     size_t d = j;
-
+    
     while(d < old_size){
-        if(i >= new_size || old[d]->hash < ts[i]->hash){
+        if(old[d]->hash < ts[i]->hash){
             d++;
         } else {
             if(j != d){
@@ -137,8 +137,7 @@ inline void Client::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
                 j = d;
             }
 
-            equalLoop(ts, old_size, new_size, j, i);
-            d = j;
+            return equalLoop(ts, old_size, new_size, j, i);
         }
     }
 }
@@ -148,7 +147,7 @@ void Client::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
 {
     size_t d = i;
     std::vector<std::shared_ptr<Torrent> > delta;
-
+    
     while(d < new_size){
         if(j == old_size || old[j]->hash > ts[d]->hash){
             delta.push_back(ts[d]);
@@ -159,8 +158,7 @@ void Client::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
                 i = d;
             }
 
-            removeLoop(ts, old_size, new_size, j, i);
-            d = i;
+            return removeLoop(ts, old_size, new_size, j, i);
         }
     }
 }
@@ -176,7 +174,7 @@ inline void Client::equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
             i++;
             j++;
         } else {
-            insertLoop(ts, old_size, new_size, j, i);
+            return insertLoop(ts, old_size, new_size, j, i);
         }
     }
 }
@@ -212,7 +210,7 @@ void Client::fetchAll(){
                 const std::shared_ptr<Torrent> &b){
             return a->hash < b->hash;
             });
-
+    
     insertLoop(ts, old_size, new_size, j, i);
 
     if(j != old_size){

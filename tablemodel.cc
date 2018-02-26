@@ -126,7 +126,7 @@ void TableModel::insertTorrents(int i, std::vector<std::shared_ptr<Torrent>> ts)
 }
 
 void TableModel::removeTorrents(int from, int to){
-    beginRemoveRows(QModelIndex(), from, to);
+    beginRemoveRows(QModelIndex(), from, to-1);
     torrents.erase(torrents.begin()+from, torrents.begin()+to);
     endRemoveRows();
 }
