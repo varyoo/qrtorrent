@@ -2,7 +2,8 @@
 
 ~~~sh
 # pacman -S xmlrpc-c qt5-base
-$ qmake release
+$ qmake
+$ make release
 $ ./qrtorrent
 ~~~
 
@@ -48,5 +49,6 @@ See https://github.com/rakshasa/rtorrent/wiki/RPC-Setup-XMLRPC
 Build in debug mode:
 
 ~~~sh
-$ qmake debug&&./qrtorrent
+$ qmake
+$ make debug&&./qrtorrent
 ~~~
