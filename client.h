@@ -10,6 +10,17 @@
 #include<memory>
 #include<QTimer>
 #include<config.h>
+#include"rtorrent.h"
+#include"scheduler.h"
+
+/*typedef const std::array<const std::string> torrent_path;
+
+class torrent_file {
+public:
+    const QString basename;
+    torrent_file(const QString &basename):
+        basename(basename){}
+};*/
 
 class Torrent {
 public:
@@ -97,32 +108,22 @@ public:
 
 typedef std::vector<std::shared_ptr<Torrent> > Torrents;
 
+
 class Client : public QObject
 {
     Q_OBJECT
 
 private:
     static const int interval = 1000;
-    xmlrpc_c::clientXmlTransport_curl transport;
-    xmlrpc_c::client_xml client;
     std::vector<std::shared_ptr<Torrent> > old;
     xmlrpc_c::paramList fetchAllParams;
-    QTimer timer;
-    bool stopRequested = false;
-    bool pauseRequested = false;
     Config conf{};
-    xmlrpc_c::carriageParm_curl0 *cp;
+    rtorrent &rtor;
+
+public:
+    scheduler sched;
 
 private:
-    void cmdForHashes(std::string, QStringList);
-    void rescheduleFetchAll();
-    inline void setConnection(){
-        cp = new xmlrpc_c::carriageParm_curl0(conf.url().toStdString());
-        cp->setBasicAuth(conf.user().toStdString(), conf.password().toStdString());
-    }
-    static void addCmd(xmlrpc_c::carray&, std::string, xmlrpc_c::carray&);
-    bool call(std::string, xmlrpc_c::paramList);
-    bool multicall(xmlrpc_c::carray);
     static void loadFileInto(xmlrpc_c::cbytestring&, QString);
     static std::shared_ptr<Torrent> parse_torrent(const xmlrpc_c::value&);
     //void sshConnect(); 
@@ -136,7 +137,7 @@ private:
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
 
 public:
-    Client();
+    Client(rtorrent &rtor);
     ~Client();
 
 public slots:
@@ -144,11 +145,6 @@ public slots:
     void startTorrents(QStringList hashes);
     void stopTorrents(QStringList hashes);
     void removeTorrents(QStringList hashes, bool deleteData);
-    inline void start(){ timer.start(0); }
-    void stop();
-    void updateConnection();
-    void pause(){ pauseRequested = true; }
-    void resume();
     void addFiles(QString dest, QStringList fs, bool start = false);
     //void sshReconnect();
 

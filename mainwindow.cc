@@ -7,10 +7,12 @@
 #include<QDir>
 #include"adddialog.h"
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    client(),
+    rtor(),
+    client(rtor),
     worker(),
     search(new QLineEdit(this))
 {
@@ -28,13 +30,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionConnect->setIcon(style()->standardIcon(QStyle::SP_DriveNetIcon));
     ui->actionOpen->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     
+    rtor.moveToThread(&worker);
     client.moveToThread(&worker);
 
-    connect(&client, &Client::finished, &worker, &QThread::quit,
+    connect(&client.sched, &scheduler::finished, &worker, &QThread::quit,
             // very important somehow or the program never exits
             Qt::DirectConnection
             );
-    connect(this, SIGNAL(aboutToQuit()), &client, SLOT(stop()));
+    connect(this, SIGNAL(aboutToQuit()), &client.sched, SLOT(stop()));
 
     qDebug() << "Main thread id =" << QThread::currentThreadId();
     
@@ -55,16 +58,16 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&client, &Client::torrentsRemoved,
             ui->tableView, &Table::removeTorrents);
 
-    connect(&worker, SIGNAL(started()), &client, SLOT(start()));
+    connect(&worker, SIGNAL(started()), &client.sched, SLOT(resume()));
 
     connect(this, &MainWindow::filesAdded,
             &client, &Client::addFiles);
 
     // stop this fetch all torrents every second hell when the window doesn't have focus
     connect(this, &MainWindow::focusLost,
-            &client, &Client::pause);
+            &client.sched, &scheduler::pause);
     connect(this, &MainWindow::focusGained,
-            &client, &Client::resume);
+            &client.sched, &scheduler::resume);
 
     worker.start();
 }
@@ -80,7 +83,7 @@ void MainWindow::on_actionConnect_triggered()
 {
    Connect c(this);
    c.connect(&c, &Connect::connectionChanged,
-           &client, &Client::updateConnection);
+           &rtor, &rtorrent::updateConnection);
    c.exec();
 }
 

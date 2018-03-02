@@ -7,6 +7,7 @@
 #include<QSettings>
 #include"config.h"
 #include<QLineEdit>
+#include"rtorrent.h"
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +24,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    rtorrent rtor;
     Client client;
     QThread worker;
     Config conf{};

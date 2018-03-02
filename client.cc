@@ -35,11 +35,10 @@ void Client::sshReconnect(){
     sshConnect();
 }*/
 
-Client::Client():
+Client::Client(rtorrent &rtor):
     QObject(),
-    transport(),
-    client(&transport),
-    timer(this)
+    rtor(rtor),
+    sched(this, 1000)
 {
     //sshConnect();
 
@@ -66,15 +65,11 @@ Client::Client():
         fetchAllParams.add(xmlrpc_c::value_string(s));
     }
 
-    setConnection();
-
-    timer.setSingleShot(true);
-    connect(&timer, &QTimer::timeout,
+    connect(sched.get_timer(), &QTimer::timeout,
             this, &Client::fetchAll);
 }
 
 Client::~Client(){
-    delete cp;
 }
 
 Torrent::Torrent(xmlrpc_c::carray fs):
@@ -109,10 +104,6 @@ Torrent::Torrent(xmlrpc_c::carray fs):
 QDebug &operator<<(QDebug &d, Torrent const&t){
     d << t.hash << ":" << t.name;
     return d;
-}
-
-void Client::stop(){
-    stopRequested = true;
 }
 
 inline std::shared_ptr<Torrent>
@@ -184,10 +175,10 @@ void Client::fetchAll(){
 
     xmlrpc_c::rpcPtr c("d.multicall2", fetchAllParams);
     try {
-        c->call(&client, cp);
+        c->call(&rtor.client, rtor.cp);
     } catch(std::exception &e){
         qWarning() << e.what();
-        rescheduleFetchAll();
+        sched.reschedule();
         return;
     }
     Q_ASSERT(c->isFinished());
@@ -220,59 +211,19 @@ void Client::fetchAll(){
     }
 
     old = ts;
-    rescheduleFetchAll();
-}
-
-void Client::rescheduleFetchAll(){
-    if(stopRequested){
-        timer.stop();
-        emit finished();
-    } else if(pauseRequested){
-        timer.stop();
-    } else {
-        timer.start(interval);
-    }
-}
-
-void Client::resume(){
-    if(pauseRequested){
-        pauseRequested = false;
-        timer.start(0);
-    }
+    sched.reschedule();
 }
 
 void Client::startTorrents(QStringList hashes){
-    cmdForHashes("d.start", hashes);
+    rtor.cmdForHashes("d.start", hashes);
 }
 
 void Client::stopTorrents(QStringList hashes){
-    cmdForHashes("d.stop", hashes);
+    rtor.cmdForHashes("d.stop", hashes);
 }
 
 void Client::removeTorrents(QStringList hashes, bool deleteData){
-    cmdForHashes("d.erase", hashes);
-}
-
-void Client::cmdForHashes(std::string cmd, QStringList hashs)
-{
-    xmlrpc_c::carray cmds;
-    for(const QString h : hashs){
-        xmlrpc_c::carray ps = {xmlrpc_c::value_string(h.toStdString())};
-        addCmd(cmds, cmd, ps);
-    }
-    multicall(cmds);
-}
-
-void Client::updateConnection(){
-    delete cp;
-    setConnection();
-}
-
-void Client::addCmd(xmlrpc_c::carray &cmds, std::string cmd, xmlrpc_c::carray &ps){
-    cmds.push_back(xmlrpc_c::value_struct({
-        {"methodName", xmlrpc_c::value_string(cmd)},
-        {"params", xmlrpc_c::value_array(ps)}
-    }));
+    rtor.cmdForHashes("d.erase", hashes);
 }
 
 // from https://stackoverflow.com/questions/15138353
@@ -333,33 +284,13 @@ void Client::addFiles(QString dest, QStringList files, bool start)
         size += bytes.size();
         if(size > 300*1000){ // 524 kilobytes supposedly max
             qDebug() << "Add files: breaking down big multicall";
-            multicall(cmds);
+            rtor.multicall(cmds);
             cmds.clear();
             size = 0;
         }
         
-        addCmd(cmds, cmd, params);
+        rtor.addCmd(cmds, cmd, params);
     }
 
-    multicall(cmds);
-}
-
-bool Client::multicall(xmlrpc_c::carray cmds){
-    xmlrpc_c::paramList ps;
-    ps.add(xmlrpc_c::value_array(cmds));
-    return call("system.multicall", ps);
-}
-
-bool Client::call(std::string cmd, xmlrpc_c::paramList ps){
-    Q_ASSERT(this->thread() != QApplication::instance()->thread());
-    
-    xmlrpc_c::rpcPtr c(cmd, ps);
-    try {
-        c->call(&client, cp);
-    } catch(std::exception &e){
-        qWarning() << e.what();
-        return false;
-    }
-    Q_ASSERT(c->isFinished());
-    return true;
+    rtor.multicall(cmds);
 }

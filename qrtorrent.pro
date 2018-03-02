@@ -34,7 +34,9 @@ SOURCES += \
     adddialog.cc \
     removedialog.cc \
     tablesortmodel.cc \
-    tablemodel.cc
+    tablemodel.cc \
+    rtorrent.cc \
+    scheduler.cc
 
 HEADERS += \
     mainwindow.h \
@@ -45,7 +47,9 @@ HEADERS += \
     adddialog.h \
     removedialog.h \
     tablesortmodel.h \
-    tablemodel.h
+    tablemodel.h \
+    rtorrent.h \
+    scheduler.h
 
 FORMS += \
     mainwindow.ui \
