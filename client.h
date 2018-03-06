@@ -12,15 +12,8 @@
 #include<config.h>
 #include"rtorrent.h"
 #include"scheduler.h"
+#include"files_client.h"
 
-/*typedef const std::array<const std::string> torrent_path;
-
-class torrent_file {
-public:
-    const QString basename;
-    torrent_file(const QString &basename):
-        basename(basename){}
-};*/
 
 class Torrent {
 public:
@@ -119,9 +112,7 @@ private:
     xmlrpc_c::paramList fetchAllParams;
     Config conf{};
     rtorrent &rtor;
-
-public:
-    scheduler sched;
+    scheduler &sched;
 
 private:
     static void loadFileInto(xmlrpc_c::cbytestring&, QString);
@@ -137,8 +128,11 @@ private:
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
 
 public:
-    Client(rtorrent &rtor);
+    Client(rtorrent &rtor, scheduler &sched);
     ~Client();
+    template<class file_model_t>
+        std::unique_ptr<files_client<file_model_t> >
+        files(rtorrent&, const QString &hash);
 
 public slots:
     void fetchAll();

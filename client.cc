@@ -35,10 +35,10 @@ void Client::sshReconnect(){
     sshConnect();
 }*/
 
-Client::Client(rtorrent &rtor):
+Client::Client(rtorrent &rtor, scheduler &sched):
     QObject(),
     rtor(rtor),
-    sched(this, 1000)
+    sched(sched)
 {
     //sshConnect();
 
@@ -64,9 +64,6 @@ Client::Client(rtorrent &rtor):
     for(const std::string &s : columns){
         fetchAllParams.add(xmlrpc_c::value_string(s));
     }
-
-    connect(sched.get_timer(), &QTimer::timeout,
-            this, &Client::fetchAll);
 }
 
 Client::~Client(){

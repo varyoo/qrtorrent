@@ -21,7 +21,6 @@ public:
         delete cp;
     }
     void cmdForHashes(std::string, QStringList);
-    void rescheduleFetchAll();
     inline void setConnection(){
         cp = new xmlrpc_c::carriageParm_curl0(conf.url().toStdString());
         cp->setBasicAuth(conf.user().toStdString(), conf.password().toStdString());

@@ -8,6 +8,9 @@
 #include"config.h"
 #include<QLineEdit>
 #include"rtorrent.h"
+#include"focus.h"
+#include<QMetaObject>
+
 
 namespace Ui {
 class MainWindow;
@@ -25,20 +28,25 @@ public:
 private:
     Ui::MainWindow *ui;
     rtorrent rtor;
+    scheduler sched;
     Client client;
     QThread worker;
     Config conf{};
     QLineEdit *search;
+    QMetaObject::Connection run_fetch_all;
+    focus_t focus;
+
+private:
+    void schedule_client();
 
 signals:
     void aboutToQuit();
     void finished();
-    void focusLost();
-    void focusGained();
     void filesAdded(QString dest, QStringList fs, bool start);
 private slots:
     void on_actionConnect_triggered();
     void on_actionOpen_triggered();
+    void show_details(QString hash);
 };
 
 #endif // MAINWINDOW_H

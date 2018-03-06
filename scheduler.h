@@ -19,7 +19,7 @@ private:
     QTimer timer;
 
 public:
-    scheduler(QObject *parent, int interval);
+    scheduler(int interval, QObject *parent = 0);
     void reschedule();
     inline const QTimer *get_timer(){
         return &timer;

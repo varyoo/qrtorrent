@@ -36,7 +36,16 @@ SOURCES += \
     tablesortmodel.cc \
     tablemodel.cc \
     rtorrent.cc \
-    scheduler.cc
+    scheduler.cc \
+    torrent_file.cc \
+    files_impl.cc \
+    files_daemon.cc \
+    file_model.cc \
+    client_impl.cc \
+    details_dialog.cc \
+    torrent_files_model.cc \
+    content_view.cc \
+    focus.cc
 
 HEADERS += \
     mainwindow.h \
@@ -49,13 +58,22 @@ HEADERS += \
     tablesortmodel.h \
     tablemodel.h \
     rtorrent.h \
-    scheduler.h
+    scheduler.h \
+    torrent_file.h \
+    files_client.h \
+    files_daemon.h \
+    file_model.h \
+    details_dialog.h \
+    torrent_files_model.h \
+    content_view.h \
+    focus.h
 
 FORMS += \
     mainwindow.ui \
     connect.ui \
     adddialog.ui \
-    removedialog.ui
+    removedialog.ui \
+    details_dialog.ui
 
 CONFIG += c++17 \
     debug_and_release

@@ -141,6 +141,10 @@ Table::Table(QWidget *parent):
     
     connect(this, &Table::customContextMenuRequested,
             this, &Table::showMenu);
+
+    bool ok = connect(this, &QAbstractItemView::doubleClicked,
+            this, &Table::show_details);
+    Q_ASSERT(ok);
 }
 
 void Table::apply_name_filter(const QString& name){
@@ -211,4 +215,9 @@ void Table::aboutToRemoveTorrents(){
     d.exec();
 }
 
-
+void Table::show_details(const QModelIndex &idx)
+{
+    const QModelIndex &src_idx = model.index(mapToSource(idx).row());
+    Torrent* t = static_cast<Torrent*>(src_idx.internalPointer());
+    emit details_requested(t->hash);
+}

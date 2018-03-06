@@ -6,15 +6,19 @@
 #include<QFileDialog>
 #include<QDir>
 #include"adddialog.h"
+#include"details_dialog.h"
+#include"files_daemon.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     rtor(),
-    client(rtor),
+    sched(1000),
+    client(rtor, sched),
     worker(),
-    search(new QLineEdit(this))
+    search(new QLineEdit(this)),
+    focus(sched)
 {
     ui->setupUi(this);
     qDebug() << "Using configuration file" << conf.fileName();
@@ -30,44 +34,56 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionConnect->setIcon(style()->standardIcon(QStyle::SP_DriveNetIcon));
     ui->actionOpen->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     
+    sched.moveToThread(&worker);
     rtor.moveToThread(&worker);
     client.moveToThread(&worker);
 
-    connect(&client.sched, &scheduler::finished, &worker, &QThread::quit,
+    schedule_client();
+
+    bool ok;
+    ok = connect(&sched, &scheduler::finished, &worker, &QThread::quit,
             // very important somehow or the program never exits
             Qt::DirectConnection
             );
-    connect(this, SIGNAL(aboutToQuit()), &client.sched, SLOT(stop()));
+    Q_ASSERT(ok);
+    ok = connect(this, &MainWindow::aboutToQuit,
+            &sched, &scheduler::stop);
+    Q_ASSERT(ok);
 
     qDebug() << "Main thread id =" << QThread::currentThreadId();
     
-    connect(ui->tableView, &Table::torrentsStarted,
+    ok = connect(ui->tableView, &Table::torrentsStarted,
             &client, &Client::startTorrents);
-    connect(ui->tableView, &Table::torrentsStopped,
+    Q_ASSERT(ok);
+    ok = connect(ui->tableView, &Table::torrentsStopped,
             &client, &Client::stopTorrents);
-    connect(ui->tableView, &Table::torrentsRemoved,
+    Q_ASSERT(ok);
+    ok = connect(ui->tableView, &Table::torrentsRemoved,
             &client, &Client::removeTorrents);
+    Q_ASSERT(ok);
+    ok = connect(ui->tableView, &Table::details_requested,
+            this, &MainWindow::show_details);
+    Q_ASSERT(ok);
 
     qRegisterMetaType<std::vector<std::shared_ptr<Torrent> > >
         ("std::vector<std::shared_ptr<Torrent> >");
     qRegisterMetaType<std::shared_ptr<Torrent> >("std::shared_ptr<Torrent>");
-    connect(&client, &Client::torrentChanged,
+    ok = connect(&client, &Client::torrentChanged,
             ui->tableView, &Table::changeTorrent);
-    connect(&client, &Client::torrentsInserted,
+    Q_ASSERT(ok);
+    ok = connect(&client, &Client::torrentsInserted,
             ui->tableView, &Table::insertTorrents);
-    connect(&client, &Client::torrentsRemoved,
+    Q_ASSERT(ok);
+    ok = connect(&client, &Client::torrentsRemoved,
             ui->tableView, &Table::removeTorrents);
+    Q_ASSERT(ok);
 
-    connect(&worker, SIGNAL(started()), &client.sched, SLOT(resume()));
+    ok = connect(&worker, SIGNAL(started()), &sched, SLOT(resume()));
+    Q_ASSERT(ok);
 
-    connect(this, &MainWindow::filesAdded,
+    ok = connect(this, &MainWindow::filesAdded,
             &client, &Client::addFiles);
-
-    // stop this fetch all torrents every second hell when the window doesn't have focus
-    connect(this, &MainWindow::focusLost,
-            &client.sched, &scheduler::pause);
-    connect(this, &MainWindow::focusGained,
-            &client.sched, &scheduler::resume);
+    Q_ASSERT(ok);
 
     worker.start();
 }
@@ -92,9 +108,9 @@ void MainWindow::changeEvent(QEvent *event)
     QWidget::changeEvent(event);
     if (event->type() == QEvent::ActivationChange){
         if(this->isActiveWindow()){
-            emit focusGained();
+            focus.focus_in();
         } else {
-            emit focusLost();
+            focus.focus_out();
         }
     }
 }
@@ -114,4 +130,29 @@ void MainWindow::on_actionOpen_triggered()
     ad.connect(&ad, &AddDialog::filesAdded,
             &client, &Client::addFiles);
     ad.exec();
+}
+
+void MainWindow::show_details(QString hash)
+{
+    // stop the client daemon
+    focus.disconnect();
+    disconnect(run_fetch_all);
+    
+    auto fc = client.files<file_model_t>(rtor, hash);
+
+    files_daemon_t fd(sched, *fc);
+    fd.moveToThread(&worker);
+
+    details_dialog d(this, fd);
+    d.exec();
+
+    schedule_client();
+    focus.reconnect();
+}
+
+void MainWindow::schedule_client()
+{
+    run_fetch_all = connect(sched.get_timer(), &QTimer::timeout,
+            &client, &Client::fetchAll, Qt::DirectConnection);
+    Q_ASSERT(run_fetch_all);
 }

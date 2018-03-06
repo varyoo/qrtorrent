@@ -2,7 +2,7 @@
 #include<QDebug>
 
 
-scheduler::scheduler(QObject *parent, int interval):
+scheduler::scheduler(int interval, QObject *parent):
     QObject(parent),
     state(paused),
     interval(interval),
