@@ -7,6 +7,7 @@ rtorrent::rtorrent():
     transport(),
     client(&transport)
 {
+    xmlrpc_limit_set(XMLRPC_XML_SIZE_LIMIT_ID, 5e6);
     setConnection();
 }
 

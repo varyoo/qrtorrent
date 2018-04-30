@@ -79,5 +79,5 @@ CONFIG += c++17 \
     debug_and_release
 
 LIBS += \
-    -lxmlrpc++ -lxmlrpc_client++
+    -lxmlrpc -lxmlrpc++ -lxmlrpc_client++
     #-lboost_system -ltorrent-rasterbar -lboost_filesystem
