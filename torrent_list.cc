@@ -1,47 +1,16 @@
-#include "client.h"
+#include "torrent_list.h"
 #include<QDebug>
 #include<QThread>
 #include<QApplication>
 #include<fstream>
 #include<QDateTime>
 
-/*void Client::sshConnect(){
-    static int verbosity = SSH_LOG_PROTOCOL;
-    sshs.setOption(SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
-    sshs.setOption(SSH_OPTIONS_HOST, conf.sshHost().toStdString().c_str());
-    QString sshConf = "~/.ssh/config";
-    try {
-        sshs.optionsParseConfig(sshConf.toStdString().c_str());
-        sshs.connect();
-        sshs.userauthPublickeyAuto();
-        sshc.openSession();
-        Q_ASSERT(sshc.isOpen());
-        emit sshConnected();
-        sshc.requestShell();
-        const char *echo = "echo 1";
-        sshc.write(echo, strlen(echo));
-        echo = "echo 2";
-        sshc.write(echo, strlen(echo));
-    } catch(ssh::SshException e){
-        qWarning() << QString::fromStdString(e.getError());
-        emit sshError(e);
-    }
-}
 
-void Client::sshReconnect(){
-    sshc.close();
-    sshc.sendEof();
-    sshs.disconnect();
-    sshConnect();
-}*/
-
-Client::Client(rtorrent &rtor, scheduler &sched):
-    QObject(),
+template<typename listener_t>
+torrent_list<listener_t>::torrent_list(rtorrent &rtor, listener_t &listener):
     rtor(rtor),
-    sched(sched)
+    listener(listener)
 {
-    //sshConnect();
-
     const std::string columns[Torrent::NB_COLUMNS+2]{"", "name",
         "d.hash=",
         "d.name=",
@@ -66,52 +35,8 @@ Client::Client(rtorrent &rtor, scheduler &sched):
     }
 }
 
-Client::~Client(){
-}
-
-Torrent::Torrent(xmlrpc_c::carray fs):
-    hash(QString::fromStdString(xmlrpc_c::value_string(fs[HASH]) ) ),
-    name(QString::fromStdString(xmlrpc_c::value_string(fs[NAME]) ) ),
-    bytes_done(xmlrpc_c::value_i8(fs[BYTES_DONE]) ),
-    size_bytes(xmlrpc_c::value_i8(fs[SIZE_BYTES]) ),
-    upRate(xmlrpc_c::value_i8(fs[UP_RATE]) ),
-    upTotal(xmlrpc_c::value_i8(fs[UP_TOTAL]) ),
-    downRate(xmlrpc_c::value_i8(fs[DOWN_RATE]) ),
-    downTotal(xmlrpc_c::value_i8(fs[DOWN_TOTAL]) ),
-    creation_date(xmlrpc_c::value_i8(fs[CREATION_DATE]) ),
-    addtime(QString::fromStdString(xmlrpc_c::value_string(fs[Torrent::ADDTIME]) ).toLongLong() ),
-    ratio(xmlrpc_c::value_i8(fs[RATIO]) ),
-    is_active(xmlrpc_c::value_i8(fs[IS_ACTIVE]) == 1),
-    is_hash_checking(xmlrpc_c::value_i8(fs[IS_HASH_CHECKING]) == 1),
-    is_open(xmlrpc_c::value_i8(fs[IS_OPEN]) == 1),
-    complete(xmlrpc_c::value_i8(fs[COMPLETE]) == 1),
-    state(xmlrpc_c::value_i8(fs[STATE]) == 1)
-{
-    if(is_hash_checking){
-        display_state = State::Checking;
-    } else if(complete && is_open && state){
-        display_state = State::Seeding;
-    } else if(!complete && is_open && state){
-        display_state = State::Downloading;
-    } else if(!is_open || (is_open && !state) ){
-        display_state = State::Stopped;
-    }
-}
-
-QDebug &operator<<(QDebug &d, Torrent const&t){
-    d << t.hash << ":" << t.name;
-    return d;
-}
-
-inline std::shared_ptr<Torrent>
-Client::parse_torrent(const xmlrpc_c::value &v){
-    xmlrpc_c::value_array va(v);
-    auto fs = va.vectorValueValue();
-    auto t = std::make_shared<Torrent>(fs);
-    return t;
-}
-
-inline void Client::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
+template<typename listener_t>
+inline void torrent_list<listener_t>::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i)
 {
     size_t d = j;
@@ -121,7 +46,7 @@ inline void Client::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
             d++;
         } else {
             if(j != d){
-                emit torrentsRemoved(j, d);
+                listener.torrents_removed(j, d);
                 j = d;
             }
 
@@ -130,7 +55,8 @@ inline void Client::removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
     }
 }
 
-void Client::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
+template<typename listener_t>
+void torrent_list<listener_t>::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i)
 {
     size_t d = i;
@@ -142,7 +68,7 @@ void Client::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
             d++;
         } else {
             if(i != d){
-                emit torrentsInserted(i, delta);
+                listener.torrents_inserted(i, delta);
                 i = d;
             }
 
@@ -151,13 +77,14 @@ void Client::insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
     }
 }
 
-inline void Client::equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
+template<typename listener_t>
+inline void torrent_list<listener_t>::equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i)
 {
     while(j < old_size && i < new_size){
         if(old[j]->hash == ts[i]->hash){
             if(ts[i]->hasChanged(*old[j])){
-                emit torrentChanged(i, ts[i]);
+                listener.torrent_changed(i, ts[i]);
             }
             i++;
             j++;
@@ -167,15 +94,15 @@ inline void Client::equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
     }
 }
 
-void Client::fetchAll(){
-    Q_ASSERT(this->thread() != QApplication::instance()->thread());
+template<typename listener_t>
+void torrent_list<listener_t>::fetch_all(){
 
     xmlrpc_c::rpcPtr c("d.multicall2", fetchAllParams);
     try {
         c->call(&rtor.client, rtor.cp);
     } catch(std::exception &e){
         qWarning() << e.what();
-        sched.reschedule();
+        //nsched.reschedule();
         return;
     }
     Q_ASSERT(c->isFinished());
@@ -202,29 +129,18 @@ void Client::fetchAll(){
     insertLoop(ts, old_size, new_size, j, i);
 
     if(j != old_size){
-        emit torrentsRemoved(j, old_size);
+        listener.torrents_removed(j, old_size);
     } else if(i != new_size){
-        emit torrentsInserted(i, {ts.begin()+i, ts.end()});
+        listener.torrents_inserted(i, {ts.begin()+i, ts.end()});
     }
 
     old = ts;
-    sched.reschedule();
-}
-
-void Client::startTorrents(QStringList hashes){
-    rtor.cmdForHashes("d.start", hashes);
-}
-
-void Client::stopTorrents(QStringList hashes){
-    rtor.cmdForHashes("d.stop", hashes);
-}
-
-void Client::removeTorrents(QStringList hashes, bool deleteData){
-    rtor.cmdForHashes("d.erase", hashes);
+    //sched.reschedule();
 }
 
 // from https://stackoverflow.com/questions/15138353
-void Client::loadFileInto(xmlrpc_c::cbytestring &bytes, QString filename){
+template<typename listener_t>
+void torrent_list<listener_t>::loadFileInto(xmlrpc_c::cbytestring &bytes, QString filename){
     // open the file:
     std::ifstream file(filename.toStdString(), std::ios::binary);
 
@@ -248,7 +164,8 @@ void Client::loadFileInto(xmlrpc_c::cbytestring &bytes, QString filename){
 }
 
 
-void Client::addFiles(QString dest, QStringList files, bool start)
+template<typename listener_t>
+void torrent_list<listener_t>::add_files(QString dest, QStringList files, bool start)
 {
     const std::string std_dest = dest.toStdString();
     const xmlrpc_c::value_string target("");
@@ -262,7 +179,7 @@ void Client::addFiles(QString dest, QStringList files, bool start)
     
     for(const QString &filename : files){
         xmlrpc_c::cbytestring bytes;
-        Client::loadFileInto(bytes, filename);
+        torrent_list::loadFileInto(bytes, filename);
 
         xmlrpc_c::value_bytestring v(bytes);
         xmlrpc_c::carray params = {target, v, addtime};

@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include<QMainWindow>
-#include"client.h"
+#include"torrent_list_daemon.h"
 #include<QThread>
 #include<QSettings>
 #include"config.h"
@@ -29,7 +29,7 @@ private:
     Ui::MainWindow *ui;
     rtorrent rtor;
     scheduler sched;
-    Client client;
+    torrent_list_daemon client;
     QThread worker;
     Config conf{};
     QLineEdit *search;

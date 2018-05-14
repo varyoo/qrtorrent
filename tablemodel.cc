@@ -1,5 +1,7 @@
 #include "tablemodel.h"
-#include<QColor>
+#include <QColor>
+#include <QDebug>
+
 
 TableModel::TableModel(QObject *parent):
     QAbstractListModel(parent)

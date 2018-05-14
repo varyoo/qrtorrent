@@ -1,7 +1,7 @@
 #include"mainwindow.h"
 #include<QApplication>
 #include"table.h"
-#include"client.h"
+#include"torrent_list.h"
 
 int main(int argc, char *argv[])
 {

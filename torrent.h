@@ -1,18 +1,9 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef TORRENT_H
+#define TORRENT_H
 
-#include<libssh/libsshpp.hpp>
-#include<xmlrpc-c/girerr.hpp>
-#include<xmlrpc-c/base.hpp>
-#include<xmlrpc-c/client.hpp>
-#include<iostream>
-#include<QDebug>
-#include<memory>
-#include<QTimer>
-#include<config.h>
-#include"rtorrent.h"
-#include"scheduler.h"
-#include"files_client.h"
+#include <QString>
+#include <xmlrpc-c/base.hpp>
+#include <memory>
 
 
 class Torrent {
@@ -64,7 +55,7 @@ public:
 
 public:
     Torrent(xmlrpc_c::carray);
-    friend QDebug &operator<<(QDebug&, Torrent const&);
+    friend QDebug &operator<<(QDebug&, const Torrent&);
     inline bool hasChanged(const Torrent &o) const {
         Q_ASSERT(o.hash == hash);
 
@@ -101,55 +92,4 @@ public:
 
 typedef std::vector<std::shared_ptr<Torrent> > Torrents;
 
-
-class Client : public QObject
-{
-    Q_OBJECT
-
-private:
-    static const int interval = 1000;
-    std::vector<std::shared_ptr<Torrent> > old;
-    xmlrpc_c::paramList fetchAllParams;
-    Config conf{};
-    rtorrent &rtor;
-    scheduler &sched;
-
-private:
-    static void loadFileInto(xmlrpc_c::cbytestring&, QString);
-    static std::shared_ptr<Torrent> parse_torrent(const xmlrpc_c::value&);
-    //void sshConnect(); 
-
-    // needs heavy tests as i don't understand half of these
-    void removeLoop(std::vector<std::shared_ptr<Torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
-    void insertLoop(std::vector<std::shared_ptr<Torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
-    void equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
-
-public:
-    Client(rtorrent &rtor, scheduler &sched);
-    ~Client();
-    template<class file_model_t>
-        std::unique_ptr<files_client<file_model_t> >
-        files(rtorrent&, const QString &hash);
-
-public slots:
-    void fetchAll();
-    void startTorrents(QStringList hashes);
-    void stopTorrents(QStringList hashes);
-    void removeTorrents(QStringList hashes, bool deleteData);
-    void addFiles(QString dest, QStringList fs, bool start = false);
-    //void sshReconnect();
-
-signals:
-    void torrentChanged(int, std::shared_ptr<Torrent>);
-    void torrentsInserted(int, std::vector<std::shared_ptr<Torrent> >);
-    void torrentsRemoved(int, int);
-
-    void finished();
-    //void sshError(ssh::SshException e);
-    //void sshConnected();
-};
-
-#endif // CLIENT_H
+#endif // TORRENT_H

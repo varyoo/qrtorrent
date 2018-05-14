@@ -27,5 +27,4 @@ files_daemon_t::fetch()
     }
 
     emit files_loaded(files, root);
-    //sched.reschedule();
 }

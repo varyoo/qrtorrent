@@ -1,9 +1,10 @@
 #ifndef TORRENTSMODEL_H
 #define TORRENTSMODEL_H
 
-#include<QAbstractTableModel>
-#include<memory>
-#include"client.h"
+#include <QAbstractTableModel>
+#include <memory>
+#include "torrent.h"
+
 
 class TableModel : public QAbstractListModel {
     public:

@@ -53,13 +53,13 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << "Main thread id =" << QThread::currentThreadId();
     
     ok = connect(ui->tableView, &Table::torrentsStarted,
-            &client, &Client::startTorrents);
+            &client, &torrent_list_daemon::start_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::torrentsStopped,
-            &client, &Client::stopTorrents);
+            &client, &torrent_list_daemon::stop_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::torrentsRemoved,
-            &client, &Client::removeTorrents);
+            &client, &torrent_list_daemon::remove_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::details_requested,
             this, &MainWindow::show_details);
@@ -68,13 +68,13 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<std::vector<std::shared_ptr<Torrent> > >
         ("std::vector<std::shared_ptr<Torrent> >");
     qRegisterMetaType<std::shared_ptr<Torrent> >("std::shared_ptr<Torrent>");
-    ok = connect(&client, &Client::torrentChanged,
+    ok = connect(&client, &torrent_list_daemon::torrent_changed,
             ui->tableView, &Table::changeTorrent);
     Q_ASSERT(ok);
-    ok = connect(&client, &Client::torrentsInserted,
+    ok = connect(&client, &torrent_list_daemon::torrents_inserted,
             ui->tableView, &Table::insertTorrents);
     Q_ASSERT(ok);
-    ok = connect(&client, &Client::torrentsRemoved,
+    ok = connect(&client, &torrent_list_daemon::torrents_removed,
             ui->tableView, &Table::removeTorrents);
     Q_ASSERT(ok);
 
@@ -82,7 +82,7 @@ MainWindow::MainWindow(QWidget *parent) :
     Q_ASSERT(ok);
 
     ok = connect(this, &MainWindow::filesAdded,
-            &client, &Client::addFiles);
+            &client, &torrent_list_daemon::add_files);
     Q_ASSERT(ok);
 
     worker.start();
@@ -128,7 +128,7 @@ void MainWindow::on_actionOpen_triggered()
 
     AddDialog ad(this, fs);
     ad.connect(&ad, &AddDialog::filesAdded,
-            &client, &Client::addFiles);
+            &client, &torrent_list_daemon::add_files);
     ad.exec();
 }
 
@@ -138,7 +138,7 @@ void MainWindow::show_details(QString hash)
     focus.disconnect();
     disconnect(run_fetch_all);
     
-    auto fc = client.files<file_model_t>(rtor, hash);
+    auto fc = client.files<file_model_t>(hash);
 
     files_daemon_t fd(sched, *fc);
     fd.moveToThread(&worker);
@@ -153,6 +153,6 @@ void MainWindow::show_details(QString hash)
 void MainWindow::schedule_client()
 {
     run_fetch_all = connect(sched.get_timer(), &QTimer::timeout,
-            &client, &Client::fetchAll, Qt::DirectConnection);
+            &client, &torrent_list_daemon::fetch_all, Qt::DirectConnection);
     Q_ASSERT(run_fetch_all);
 }

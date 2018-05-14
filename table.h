@@ -1,7 +1,7 @@
 #ifndef TABLE2_H
 #define TABLE2_H
 
-#include"client.h"
+#include"torrent_list.h"
 #include<QVariant>
 #include<memory>
 #include<QItemDelegate>

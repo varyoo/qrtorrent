@@ -26,7 +26,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     table.cc \
-    client.cc \
     main.cc \
     mainwindow.cc \
     connect.cc \
@@ -41,15 +40,14 @@ SOURCES += \
     files_impl.cc \
     files_daemon.cc \
     file_model.cc \
-    client_impl.cc \
     details_dialog.cc \
     torrent_files_model.cc \
     content_view.cc \
-    focus.cc
+    focus.cc \
+    torrent.cc
 
 HEADERS += \
     mainwindow.h \
-    client.h \
     table.h \
     connect.h \
     config.h \
@@ -66,7 +64,10 @@ HEADERS += \
     details_dialog.h \
     torrent_files_model.h \
     content_view.h \
-    focus.h
+    focus.h \
+    torrent.h \
+    torrent_list.h \
+    torrent_list_daemon.h
 
 FORMS += \
     mainwindow.ui \
