@@ -184,9 +184,16 @@ void Table::showMenu(QPoint p)
     QAction remove("Delete");
     m.connect(&remove, &QAction::triggered, this, &Table::aboutToRemoveTorrents);
 
+    QAction move("Set download location");
+    m.connect(&move, &QAction::triggered, this, &Table::move_torrents);
+
     m.addAction(&start); // does not take ownership
     m.addAction(&stop);
     m.addSeparator();
+
+    m.addAction(&move);
+    m.addSeparator();
+
     m.addAction(&remove);
     m.exec(QCursor::pos());
 }
@@ -220,4 +227,8 @@ void Table::show_details(const QModelIndex &idx)
     const QModelIndex &src_idx = model.index(mapToSource(idx).row());
     Torrent* t = static_cast<Torrent*>(src_idx.internalPointer());
     emit details_requested(t->hash);
+}
+
+void Table::move_torrents(){
+    emit update_torrents(selectedHashes());
 }

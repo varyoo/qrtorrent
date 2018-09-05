@@ -42,11 +42,14 @@ private:
 signals:
     void aboutToQuit();
     void finished();
-    void filesAdded(QString dest, QStringList fs, bool start);
+    void add_torrents(QString dest_path, QStringList filenames, bool start);
+    void move_downloads(QString dest_path, QStringList hashes, bool move_data);
+
 private slots:
     void on_actionConnect_triggered();
     void on_actionOpen_triggered();
     void show_details(QString hash);
+    void update_torrents(QStringList hashes);
 };
 
 #endif // MAINWINDOW_H

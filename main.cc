@@ -1,7 +1,8 @@
-#include"mainwindow.h"
-#include<QApplication>
-#include"table.h"
-#include"torrent_list.h"
+#include "mainwindow.h"
+#include <QApplication>
+#include "table.h"
+#include "torrent_list.h"
+#include "app.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,7 +10,7 @@ int main(int argc, char *argv[])
     l.setNumberOptions(QLocale::DefaultNumberOptions);
     QLocale::setDefault(l);*/
 
-    QApplication a(argc, argv);
+    App a(argc, argv);
     MainWindow w;
     w.show();
 

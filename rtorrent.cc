@@ -1,6 +1,6 @@
-#include"rtorrent.h"
-#include<QDebug>
-#include<QApplication>
+#include "rtorrent.h"
+#include <QDebug>
+#include <QApplication>
 
 
 rtorrent::rtorrent():
@@ -16,6 +16,12 @@ void rtorrent::updateConnection(){
     setConnection();
 }
 
+void rtorrent::call(xmlrpc_c::rpc &req){
+    Q_ASSERT(this->thread() != QApplication::instance()->thread());
+    
+    req.call(&client, cp);
+}
+
 void rtorrent::cmdForHashes(std::string cmd, QStringList hashs)
 {
     xmlrpc_c::carray cmds;
@@ -23,7 +29,12 @@ void rtorrent::cmdForHashes(std::string cmd, QStringList hashs)
         xmlrpc_c::carray ps = {xmlrpc_c::value_string(h.toStdString())};
         addCmd(cmds, cmd, ps);
     }
-    multicall(cmds);
+
+    xmlrpc_c::paramList ps;
+    ps.add(xmlrpc_c::value_array(cmds));
+
+    xmlrpc_c::rpc req("system.multicall", ps);
+    call(req);
 }
 
 void rtorrent::addCmd(xmlrpc_c::carray &cmds, std::string cmd, xmlrpc_c::carray &ps){
@@ -31,24 +42,4 @@ void rtorrent::addCmd(xmlrpc_c::carray &cmds, std::string cmd, xmlrpc_c::carray 
         {"methodName", xmlrpc_c::value_string(cmd)},
         {"params", xmlrpc_c::value_array(ps)}
     }));
-}
-
-bool rtorrent::multicall(xmlrpc_c::carray cmds){
-    xmlrpc_c::paramList ps;
-    ps.add(xmlrpc_c::value_array(cmds));
-    return call("system.multicall", ps);
-}
-
-bool rtorrent::call(std::string cmd, xmlrpc_c::paramList ps){
-    Q_ASSERT(this->thread() != QApplication::instance()->thread());
-    
-    xmlrpc_c::rpcPtr c(cmd, ps);
-    try {
-        c->call(&client, cp);
-    } catch(std::exception &e){
-        qWarning() << e.what();
-        return false;
-    }
-    Q_ASSERT(c->isFinished());
-    return true;
 }

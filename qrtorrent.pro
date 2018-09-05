@@ -44,9 +44,11 @@ SOURCES += \
     torrent_files_model.cc \
     content_view.cc \
     focus.cc \
-    torrent.cc
+    torrent.cc \
+    move_dialog.cpp
 
 HEADERS += \
+    app.h \
     mainwindow.h \
     table.h \
     connect.h \
@@ -67,14 +69,16 @@ HEADERS += \
     focus.h \
     torrent.h \
     torrent_list.h \
-    torrent_list_daemon.h
+    torrent_list_daemon.h \
+    move_dialog.h
 
 FORMS += \
     mainwindow.ui \
     connect.ui \
     adddialog.ui \
     removedialog.ui \
-    details_dialog.ui
+    details_dialog.ui \
+    move_dialog.ui
 
 CONFIG += c++17 \
     debug_and_release

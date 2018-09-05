@@ -49,6 +49,7 @@ private slots:
     void stopTorrents();
     void aboutToRemoveTorrents();
     void show_details(const QModelIndex&);
+    void move_torrents();
 
 public:
     Table(QWidget *parent);
@@ -73,6 +74,7 @@ signals:
     void torrentsStopped(QStringList hashs);
     void torrentsRemoved(QStringList hs, bool deleteData);
     void details_requested(QString hash);
+    void update_torrents(QStringList hashes);
 };
 
 #endif // TABLE2_H

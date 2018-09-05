@@ -39,6 +39,9 @@ private:
     void equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
 
+    static std::string escape_shell_args(std::string const &);
+    void move_data(QStringList hashes, QString dest_path);
+
 public:
     torrent_list(rtorrent &rtor, listener_t &listener);
     ~torrent_list(){}
@@ -55,6 +58,7 @@ public:
         rtor.cmdForHashes("d.erase", hashes);
     }
     void add_files(QString dest, QStringList fs, bool start = false);
+    void move_downloads(QString dest, QStringList torrents, bool move_data = false);
 };
 
 #endif // CLIENT_H

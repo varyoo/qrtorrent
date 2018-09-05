@@ -47,6 +47,9 @@ public slots:
     void add_files(QString dest, QStringList fs, bool start = false){
         list.add_files(dest, fs, start);
     }
+    void move_downloads(QString dest, QStringList hashes, bool start){
+        list.move_downloads(dest, hashes, start);
+    }
 
 signals:
     void torrent_changed(int, std::shared_ptr<Torrent> t);

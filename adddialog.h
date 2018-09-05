@@ -13,19 +13,19 @@ class AddDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddDialog(QWidget *parent, QStringList fs);
+    QString dest_path;
+    bool start_torrents;
+
+public:
+    explicit AddDialog(QWidget *parent);
     ~AddDialog();
 
 private:
     Ui::AddDialog *ui;
-    QStringList files;
     Config conf{};
 
 private slots:
     void accept();
-
-signals:
-    void filesAdded(QString, QStringList, bool);
 };
 
 #endif // ADDDIALOG_H

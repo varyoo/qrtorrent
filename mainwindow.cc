@@ -8,6 +8,7 @@
 #include"adddialog.h"
 #include"details_dialog.h"
 #include"files_daemon.h"
+#include"move_dialog.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -50,6 +51,14 @@ MainWindow::MainWindow(QWidget *parent) :
             &sched, &scheduler::stop);
     Q_ASSERT(ok);
 
+    // Add torrents
+    connect(this, &MainWindow::add_torrents,
+            &client, &torrent_list_daemon::add_files);
+
+    // Set download location
+    connect(this, &MainWindow::move_downloads,
+            &client, &torrent_list_daemon::move_downloads);
+
     qDebug() << "Main thread id =" << QThread::currentThreadId();
     
     ok = connect(ui->tableView, &Table::torrentsStarted,
@@ -63,6 +72,11 @@ MainWindow::MainWindow(QWidget *parent) :
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::details_requested,
             this, &MainWindow::show_details);
+    Q_ASSERT(ok);
+
+    // Set torrent location
+    ok = connect(ui->tableView, &Table::update_torrents,
+            this, &MainWindow::update_torrents);
     Q_ASSERT(ok);
 
     qRegisterMetaType<std::vector<std::shared_ptr<Torrent> > >
@@ -79,10 +93,6 @@ MainWindow::MainWindow(QWidget *parent) :
     Q_ASSERT(ok);
 
     ok = connect(&worker, SIGNAL(started()), &sched, SLOT(resume()));
-    Q_ASSERT(ok);
-
-    ok = connect(this, &MainWindow::filesAdded,
-            &client, &torrent_list_daemon::add_files);
     Q_ASSERT(ok);
 
     worker.start();
@@ -117,19 +127,22 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::on_actionOpen_triggered()
 {
-    QStringList fs = QFileDialog::getOpenFileNames(this,
+    QStringList filenames = QFileDialog::getOpenFileNames(this,
             "Open torrents",
             QDir::currentPath(),
             "Torrent files (*.torrent)");
-    if(fs.size() == 0){
+    if(filenames.size() == 0){
         qDebug() << "Add torrents: no files were selected";
         return;
     }
 
-    AddDialog ad(this, fs);
-    ad.connect(&ad, &AddDialog::filesAdded,
-            &client, &torrent_list_daemon::add_files);
-    ad.exec();
+    AddDialog dialog(this);
+
+    dialog.exec();
+
+    if(dialog.result() == QDialog::Accepted){
+        emit add_torrents(dialog.dest_path, filenames, dialog.start_torrents);
+    }
 }
 
 void MainWindow::show_details(QString hash)
@@ -155,4 +168,14 @@ void MainWindow::schedule_client()
     run_fetch_all = connect(sched.get_timer(), &QTimer::timeout,
             &client, &torrent_list_daemon::fetch_all, Qt::DirectConnection);
     Q_ASSERT(run_fetch_all);
+}
+
+void MainWindow::update_torrents(QStringList hashes){
+    move_dialog dialog(this);
+
+    dialog.exec();
+
+    if(dialog.result() == QDialog::Accepted){
+        emit move_downloads(dialog.dest_path, hashes, dialog.move_data);
+    }
 }
