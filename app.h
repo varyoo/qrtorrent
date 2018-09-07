@@ -12,6 +12,7 @@ public:
             return QApplication::notify(receiver, event);
         } catch (std::exception &e) {
             qDebug() << "Exception thrown:" << e.what();
+            return false;
         }
     }
 };

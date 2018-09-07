@@ -83,6 +83,4 @@ FORMS += \
 CONFIG += c++17 \
     debug_and_release
 
-LIBS += \
-    -lxmlrpc -lxmlrpc++ -lxmlrpc_client++
-    #-lboost_system -ltorrent-rasterbar -lboost_filesystem
+LIBS += $$system(xmlrpc-c-config c++2 client --libs)
