@@ -16,12 +16,12 @@ template<class file_model_t>
 class files_client
 {
 public:
-    files_client(rtorrent&, const QString &hash);
+    files_client(std::shared_ptr<rtor::client>, const QString &hash);
     file_model_t *fetch_into(std::vector<std::shared_ptr<file_model_t> > &files);
 private:
     const QString hash;
     Config conf{};
-    rtorrent &rtor;
+    std::shared_ptr<rtor::client> rtor;
     std::vector<std::shared_ptr<file_model_t> > image;
 };
 

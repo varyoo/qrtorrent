@@ -24,6 +24,6 @@ void Connect::accept(){
             ui->user->text(),
             ui->password->text()
             );
-    emit connectionChanged();
+    
     QDialog::accept();
 }

@@ -11,19 +11,13 @@ class RemoveDialog : public QDialog
 {
     Q_OBJECT
 
-public:
-    explicit RemoveDialog(QWidget *parent, QStringList hs);
-    ~RemoveDialog();
-
 private:
     Ui::RemoveDialog *ui;
-    QStringList hs;
+    const std::vector<std::string> &hashes;
 
-private slots:
-    void accept();
-
-signals:
-    void torrentsRemoved(QStringList, bool);
+public:
+    explicit RemoveDialog(QWidget *parent, const std::vector<std::string> &hs);
+    ~RemoveDialog();
 };
 
 #endif // REMOVEDIALOG_H

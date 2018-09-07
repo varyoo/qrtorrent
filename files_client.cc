@@ -3,7 +3,7 @@
 
 
 template<class file_model_t>
-files_client<file_model_t>::files_client(rtorrent &rtor, const QString &hash):
+files_client<file_model_t>::files_client(std::shared_ptr<rtor::client> rtor, const QString &hash):
     hash(hash),
     rtor(rtor)
 {
@@ -53,11 +53,10 @@ files_client<file_model_t>::fetch_into(std::vector<std::shared_ptr<file_model_t>
     ps.add(xmlrpc_c::value_string(""));
     ps.add(xmlrpc_c::value_string("f.path_components="));
 
-    xmlrpc_c::rpcPtr c("f.multicall", ps);
-    c->call(&rtor.client, rtor.cp); // may throw
-    Q_ASSERT(c->isFinished());
+    xmlrpc_c::rpc req("f.multicall", ps);
+    rtor->call(req); // may throw
 
-    xmlrpc_c::value_array v(xmlrpc_c::value_array(c->getResult()));
+    xmlrpc_c::value_array v(xmlrpc_c::value_array(req.getResult()));
     std::vector<xmlrpc_c::value> vs = v.vectorValueValue();
 
     for(size_t i=0; i<vs.size(); i++)

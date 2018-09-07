@@ -1,18 +1,21 @@
-#include "table.h"
+#include <QThread>
+#include <QProgressBar>
+#include <QItemDelegate>
+#include <QStyleOptionProgressBar>
+#include <QApplication>
+#include <QPainter>
+#include <cmath>
+#include <QStyleOptionViewItem>
+#include <QDateTime>
+#include <QHeaderView>
+#include <QContextMenuEvent>
+#include <QMenu>
+#include <QDebug>
 
-#include<QThread>
-#include<QProgressBar>
-#include<QItemDelegate>
-#include<QStyleOptionProgressBar>
-#include<QApplication>
-#include<QPainter>
-#include<cmath>
-#include<QStyleOptionViewItem>
-#include<QDateTime>
-#include<QHeaderView>
-#include<QContextMenuEvent>
-#include<QMenu>
-#include"removedialog.h"
+#include "table.h"
+#include "move_dialog.h"
+#include "removedialog.h"
+
 
 TableCell::TableCell(TableSortModel &m, QObject *parent):
     QItemDelegate(parent),
@@ -185,7 +188,7 @@ void Table::showMenu(QPoint p)
     m.connect(&remove, &QAction::triggered, this, &Table::aboutToRemoveTorrents);
 
     QAction move("Set download location");
-    m.connect(&move, &QAction::triggered, this, &Table::move_torrents);
+    m.connect(&move, &QAction::triggered, this, &Table::show_move_dialog);
 
     m.addAction(&start); // does not take ownership
     m.addAction(&stop);
@@ -198,12 +201,14 @@ void Table::showMenu(QPoint p)
     m.exec(QCursor::pos());
 }
 
-QStringList Table::selectedHashes(){
-    QStringList hs;
+std::vector<std::string> Table::selectedHashes(){
+    std::vector<std::string> hs;
+
     for(const QModelIndex &idx : selectionModel()->selectedRows()){
         const QModelIndex &src_idx = model.index(mapToSource(idx).row());
-        hs.push_back(static_cast<Torrent*>(src_idx.internalPointer())->hash);
+        hs.push_back(static_cast<Torrent*>(src_idx.internalPointer())->hash.toStdString());
     }
+
     return hs;
 }
 
@@ -216,10 +221,14 @@ void Table::stopTorrents(){
 }
 
 void Table::aboutToRemoveTorrents(){
-    RemoveDialog d(this, selectedHashes());
-    d.connect(&d, &RemoveDialog::torrentsRemoved,
-            this, &Table::torrentsRemoved);
-    d.exec();
+    auto hs = selectedHashes();
+    RemoveDialog dialog(this, hs);
+    
+    dialog.exec();
+
+    if(dialog.result() == QDialog::Accepted){
+        emit torrentsRemoved(hs, false);
+    }
 }
 
 void Table::show_details(const QModelIndex &idx)
@@ -229,6 +238,13 @@ void Table::show_details(const QModelIndex &idx)
     emit details_requested(t->hash);
 }
 
-void Table::move_torrents(){
-    emit update_torrents(selectedHashes());
+void Table::show_move_dialog(){
+    auto hashes = selectedHashes();
+    move_dialog dialog(this);
+
+    dialog.exec();
+
+    if(dialog.result() == QDialog::Accepted){
+        emit move_downloads(hashes, dialog.dest_path.toStdString(), dialog.move_data);
+    }
 }

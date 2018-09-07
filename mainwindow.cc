@@ -1,22 +1,23 @@
-#include"mainwindow.h"
-#include"ui_mainwindow.h"
-#include<QTimer>
-#include<QThread>
-#include"connect.h"
-#include<QFileDialog>
-#include<QDir>
-#include"adddialog.h"
-#include"details_dialog.h"
-#include"files_daemon.h"
-#include"move_dialog.h"
+#include <QTimer>
+#include <QThread>
+#include <QFileDialog>
+#include <QDir>
+
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "connect.h"
+#include "adddialog.h"
+#include "details_dialog.h"
+#include "files_daemon.h"
+#include "move_dialog.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    rtor(),
+    rtor_client(conf.mk_rtorrent()),
     sched(1000),
-    client(rtor, sched),
+    torrents(rtor_client, sched),
     worker(),
     search(new QLineEdit(this)),
     focus(sched)
@@ -36,8 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionOpen->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     
     sched.moveToThread(&worker);
-    rtor.moveToThread(&worker);
-    client.moveToThread(&worker);
+    torrents.moveToThread(&worker);
 
     schedule_client();
 
@@ -51,44 +51,46 @@ MainWindow::MainWindow(QWidget *parent) :
             &sched, &scheduler::stop);
     Q_ASSERT(ok);
 
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<std::string>("std::string");
+
     // Add torrents
     connect(this, &MainWindow::add_torrents,
-            &client, &torrent_list_daemon::add_files);
+            &torrents, &torrents_daemon::add_torrents);
 
-    // Set download location
-    connect(this, &MainWindow::move_downloads,
-            &client, &torrent_list_daemon::move_downloads);
+    qRegisterMetaType<std::shared_ptr<rtor::client> >("std::shared_ptr<rtor::client>");
+    connect(this, &MainWindow::update_client,
+            &torrents, &torrents_daemon::swap_client);
 
     qDebug() << "Main thread id =" << QThread::currentThreadId();
     
     ok = connect(ui->tableView, &Table::torrentsStarted,
-            &client, &torrent_list_daemon::start_torrents);
+            &torrents, &torrents_daemon::start_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::torrentsStopped,
-            &client, &torrent_list_daemon::stop_torrents);
+            &torrents, &torrents_daemon::stop_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::torrentsRemoved,
-            &client, &torrent_list_daemon::remove_torrents);
+            &torrents, &torrents_daemon::remove_torrents);
     Q_ASSERT(ok);
     ok = connect(ui->tableView, &Table::details_requested,
             this, &MainWindow::show_details);
     Q_ASSERT(ok);
 
-    // Set torrent location
-    ok = connect(ui->tableView, &Table::update_torrents,
-            this, &MainWindow::update_torrents);
-    Q_ASSERT(ok);
+    // Set downloads location
+    connect(ui->tableView, &Table::move_downloads,
+            &torrents, &torrents_daemon::move_downloads);
 
     qRegisterMetaType<std::vector<std::shared_ptr<Torrent> > >
         ("std::vector<std::shared_ptr<Torrent> >");
     qRegisterMetaType<std::shared_ptr<Torrent> >("std::shared_ptr<Torrent>");
-    ok = connect(&client, &torrent_list_daemon::torrent_changed,
+    ok = connect(&torrents, &torrents_daemon::torrent_changed,
             ui->tableView, &Table::changeTorrent);
     Q_ASSERT(ok);
-    ok = connect(&client, &torrent_list_daemon::torrents_inserted,
+    ok = connect(&torrents, &torrents_daemon::torrents_inserted,
             ui->tableView, &Table::insertTorrents);
     Q_ASSERT(ok);
-    ok = connect(&client, &torrent_list_daemon::torrents_removed,
+    ok = connect(&torrents, &torrents_daemon::torrents_removed,
             ui->tableView, &Table::removeTorrents);
     Q_ASSERT(ok);
 
@@ -105,12 +107,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_actionConnect_triggered()
-{
-   Connect c(this);
-   c.connect(&c, &Connect::connectionChanged,
-           &rtor, &rtorrent::updateConnection);
-   c.exec();
+void MainWindow::on_actionConnect_triggered(){
+    Connect dialog(this);
+    dialog.exec();
+
+    if(dialog.result() == QDialog::Accepted){
+        auto new_client = conf.mk_rtorrent();
+
+        // this client may be used by the torrent files dialog
+        rtor_client = new_client;
+
+        emit update_client(conf.mk_rtorrent());
+    }
 }
 
 void MainWindow::changeEvent(QEvent *event)
@@ -141,7 +149,12 @@ void MainWindow::on_actionOpen_triggered()
     dialog.exec();
 
     if(dialog.result() == QDialog::Accepted){
-        emit add_torrents(dialog.dest_path, filenames, dialog.start_torrents);
+        std::vector<std::string> vec;
+        for(const auto &f : filenames){
+            vec.push_back(f.toStdString());
+        }
+
+        emit add_torrents(dialog.dest_path, vec, dialog.start_torrents);
     }
 }
 
@@ -151,9 +164,9 @@ void MainWindow::show_details(QString hash)
     focus.disconnect();
     disconnect(run_fetch_all);
     
-    auto fc = client.files<file_model_t>(hash);
+    files_client<file_model_t> fc(rtor_client, hash);
 
-    files_daemon_t fd(sched, *fc);
+    files_daemon_t fd(sched, fc);
     fd.moveToThread(&worker);
 
     details_dialog d(this, fd);
@@ -166,16 +179,6 @@ void MainWindow::show_details(QString hash)
 void MainWindow::schedule_client()
 {
     run_fetch_all = connect(sched.get_timer(), &QTimer::timeout,
-            &client, &torrent_list_daemon::fetch_all, Qt::DirectConnection);
+            &torrents, &torrents_daemon::fetch_all, Qt::DirectConnection);
     Q_ASSERT(run_fetch_all);
-}
-
-void MainWindow::update_torrents(QStringList hashes){
-    move_dialog dialog(this);
-
-    dialog.exec();
-
-    if(dialog.result() == QDialog::Accepted){
-        emit move_downloads(dialog.dest_path, hashes, dialog.move_data);
-    }
 }

@@ -1,27 +1,19 @@
-#include"removedialog.h"
-#include"ui_removedialog.h"
-#include<QDebug>
+#include <QDebug>
 
-RemoveDialog::RemoveDialog(QWidget *parent, QStringList hs) :
+#include "removedialog.h"
+#include "ui_removedialog.h"
+
+
+RemoveDialog::RemoveDialog(QWidget *parent, const std::vector<std::string> &hs) :
     QDialog(parent),
     ui(new Ui::RemoveDialog),
-    hs(hs)
+    hashes(hs)
 {
     ui->setupUi(this);
 
     QString s;
     ui->label->setText(s.sprintf(
-                "Are you sure to delete %d torrent(s)?", hs.size()));
-}
-
-void RemoveDialog::accept(){
-    if(hs.size() == 0){
-        qWarning() << "Remove 0 torrents";
-        return;
-    }
-
-    emit torrentsRemoved(hs, false);
-    QDialog::accept();
+                "Are you sure to delete %ld torrent(s)?", hs.size()));
 }
 
 RemoveDialog::~RemoveDialog()

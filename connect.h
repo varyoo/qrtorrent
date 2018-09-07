@@ -16,15 +16,13 @@ class Connect : public QDialog
 public:
     Connect(QWidget *parent = 0);
     ~Connect();
+
 public slots:
     void accept();
 
 private:
     Ui::Connect *ui;
     Config conf{};
-
-signals:
-    void connectionChanged();
 };
 
 #endif // CONNECT_H

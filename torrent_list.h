@@ -1,25 +1,32 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include<libssh/libsshpp.hpp>
-#include<xmlrpc-c/girerr.hpp>
-#include<xmlrpc-c/base.hpp>
-#include<xmlrpc-c/client.hpp>
-#include<iostream>
-#include<memory>
-#include"rtorrent.h"
-#include"scheduler.h"
-#include"files_client.h"
+#include <iostream>
+#include <memory>
+
+#include "rtorrent.h"
+#include "scheduler.h"
+#include "files_client.h"
 #include "torrent.h"
+
+#include <libssh/libsshpp.hpp>
+#include <xmlrpc-c/girerr.hpp>
+#include <xmlrpc-c/base.hpp>
+#include <xmlrpc-c/client.hpp>
 
 
 template<typename listener_t>
 class torrent_list {
+
 private:
     static constexpr int interval = 1000;
     std::vector<std::shared_ptr<Torrent> > old;
-    xmlrpc_c::paramList fetchAllParams;
-    rtorrent &rtor;
+    xmlrpc_c::paramList fetch_all_params;
+
+public:
+    std::shared_ptr<rtor::client> client;
+
+private:
     listener_t &listener;
 
 private:
@@ -39,26 +46,11 @@ private:
     void equalLoop(std::vector<std::shared_ptr<Torrent> > &ts,
         const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
 
-    static std::string escape_shell_args(std::string const &);
-    void move_data(QStringList hashes, QString dest_path);
-
 public:
-    torrent_list(rtorrent &rtor, listener_t &listener);
+    torrent_list(rtor::client_ptr client, listener_t &listener);
     ~torrent_list(){}
 
     void fetch_all();
-    void start_torrents(QStringList hashes){
-        rtor.cmdForHashes("d.start", hashes);
-    }
-    void stop_torrents(QStringList hashes){
-        rtor.cmdForHashes("d.stop", hashes);
-    }
-    void remove_torrents(QStringList hashes, bool remove_data){
-        (void) remove_data;
-        rtor.cmdForHashes("d.erase", hashes);
-    }
-    void add_files(QString dest, QStringList fs, bool start = false);
-    void move_downloads(QString dest, QStringList torrents, bool move_data = false);
 };
 
 #endif // CLIENT_H

@@ -1,37 +1,67 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include<QSettings>
+#include <QSettings>
+#include <memory>
+
+#include "rtorrent.h"
+
+#include <xmlrpc-c/client.hpp>
 
 
 class Config : public QObject {
     Q_OBJECT
+
 public:
-    Config();
-    ~Config(){}
-    inline QString url(){
+    Config():
+        ss(QSettings::IniFormat, QSettings::UserScope,
+                "qrtorrent", "qrtorrent")
+    {}
+
+    QString url(){
         return ss.value("scgi_url", "").toString();
     }
-    inline QString user(){
+    
+    QString user(){
         return ss.value("user", "").toString();
     }
-    inline QString password(){
+    
+    QString password(){
         return ss.value("password", "").toString();
     }
-    inline QString defaultDest(){
+    
+    QString defaultDest(){
         return ss.value("default_destination", "").toString();
     }
-    inline void setDefaultDest(QString s){
+    
+    void setDefaultDest(QString s){
         ss.setValue("default_destination", s);
     }
-    inline void setRemote(QString url, QString user, QString password){
+    
+    void setRemote(QString url, QString user, QString password){
         ss.setValue("scgi_url", url);
         ss.setValue("user", user);
         ss.setValue("password", password);
     }
-    inline QString fileName(){
+    
+    QString fileName(){
         return ss.fileName();
     }
+
+    std::shared_ptr<rtor::client> mk_rtorrent(){
+        auto url_val = url().toStdString();
+        auto carriage = xmlrpc_c::carriageParm_curl0Ptr(
+                new xmlrpc_c::carriageParm_curl0(url_val));
+
+        auto user_val = user().toStdString();
+        if(!user_val.empty()){
+            auto pass_val = password().toStdString();
+            carriage->setBasicAuth(user_val, pass_val);
+        }
+
+        return std::make_shared<rtor::client>(carriage);
+    }
+
 private:
     QSettings ss;
 };

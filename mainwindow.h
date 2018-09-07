@@ -1,15 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include<QMainWindow>
-#include"torrent_list_daemon.h"
-#include<QThread>
-#include<QSettings>
-#include"config.h"
-#include<QLineEdit>
-#include"rtorrent.h"
-#include"focus.h"
-#include<QMetaObject>
+#include <QMainWindow>
+#include <QThread>
+#include <QSettings>
+#include <QLineEdit>
+#include <QMetaObject>
+
+#include "config.h"
+#include "rtorrent.h"
+#include "focus.h"
+#include "torrents_daemon.h"
 
 
 namespace Ui {
@@ -27,11 +28,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    rtorrent rtor;
-    scheduler sched;
-    torrent_list_daemon client;
-    QThread worker;
     Config conf{};
+    std::shared_ptr<rtor::client> rtor_client;
+    scheduler sched;
+    torrents_daemon torrents;
+    QThread worker;
     QLineEdit *search;
     QMetaObject::Connection run_fetch_all;
     focus_t focus;
@@ -42,14 +43,13 @@ private:
 signals:
     void aboutToQuit();
     void finished();
-    void add_torrents(QString dest_path, QStringList filenames, bool start);
-    void move_downloads(QString dest_path, QStringList hashes, bool move_data);
+    void add_torrents(QString dest_path, std::vector<std::string> filenames, bool start);
+    void update_client(std::shared_ptr<rtor::client>);
 
 private slots:
     void on_actionConnect_triggered();
     void on_actionOpen_triggered();
     void show_details(QString hash);
-    void update_torrents(QStringList hashes);
 };
 
 #endif // MAINWINDOW_H

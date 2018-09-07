@@ -40,7 +40,7 @@ private:
     TableCell delegate;
 
 private:
-    QStringList selectedHashes();
+    std::vector<std::string> selectedHashes();
     QModelIndex mapToSource(const QModelIndex &index) const;
     QModelIndex mapFromSource(const QModelIndex &index) const;
 
@@ -49,7 +49,7 @@ private slots:
     void stopTorrents();
     void aboutToRemoveTorrents();
     void show_details(const QModelIndex&);
-    void move_torrents();
+    void show_move_dialog();
 
 public:
     Table(QWidget *parent);
@@ -70,11 +70,11 @@ public slots:
     void apply_name_filter(const QString& name);
 
 signals:
-    void torrentsStarted(QStringList hashs);
-    void torrentsStopped(QStringList hashs);
-    void torrentsRemoved(QStringList hs, bool deleteData);
+    void torrentsStarted(std::vector<std::string> hashs);
+    void torrentsStopped(std::vector<std::string> hashs);
+    void torrentsRemoved(std::vector<std::string> hs, bool deleteData);
     void details_requested(QString hash);
-    void update_torrents(QStringList hashes);
+    void move_downloads(std::vector<std::string> hashes, std::string dest, bool move_data);
 };
 
 #endif // TABLE2_H

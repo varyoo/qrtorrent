@@ -29,7 +29,6 @@ SOURCES += \
     main.cc \
     mainwindow.cc \
     connect.cc \
-    config.cc \
     adddialog.cc \
     removedialog.cc \
     tablesortmodel.cc \
@@ -69,8 +68,8 @@ HEADERS += \
     focus.h \
     torrent.h \
     torrent_list.h \
-    torrent_list_daemon.h \
-    move_dialog.h
+    move_dialog.h \
+    torrents_daemon.h
 
 FORMS += \
     mainwindow.ui \
