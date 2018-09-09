@@ -8,7 +8,7 @@
 #include <QMetaObject>
 
 #include "config.h"
-#include "rtorrent.h"
+#include "rtor/rtorrent.h"
 #include "focus.h"
 #include "torrents_daemon.h"
 
@@ -29,7 +29,6 @@ public:
 private:
     Ui::MainWindow *ui;
     Config conf{};
-    std::shared_ptr<rtor::client> rtor_client;
     scheduler sched;
     torrents_daemon torrents;
     QThread worker;

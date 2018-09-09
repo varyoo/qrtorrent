@@ -1,7 +1,6 @@
 #include "torrent.h"
-#include <QDebug>
 
-Torrent::Torrent(xmlrpc_c::carray fs):
+Torrent::Torrent(const xmlrpc_c::carray &fs):
     hash(QString::fromStdString(xmlrpc_c::value_string(fs[HASH]) ) ),
     name(QString::fromStdString(xmlrpc_c::value_string(fs[NAME]) ) ),
     bytes_done(xmlrpc_c::value_i8(fs[BYTES_DONE]) ),
@@ -28,9 +27,4 @@ Torrent::Torrent(xmlrpc_c::carray fs):
     } else if(!is_open || (is_open && !state) ){
         display_state = State::Stopped;
     }
-}
-
-QDebug &operator<<(QDebug &d, const Torrent &t){
-    d << t.hash << ":" << t.name;
-    return d;
 }

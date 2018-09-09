@@ -1,13 +1,13 @@
 #ifndef TABLE2_H
 #define TABLE2_H
 
-#include"torrent_list.h"
-#include<QVariant>
-#include<memory>
-#include<QItemDelegate>
-#include<QTreeView>
-#include"tablesortmodel.h"
-#include"tablemodel.h"
+#include <QVariant>
+#include <memory>
+#include <QItemDelegate>
+#include <QTreeView>
+
+#include "tablesortmodel.h"
+#include "tablemodel.h"
 
 
 class TableCell : public QItemDelegate {

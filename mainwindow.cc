@@ -15,9 +15,8 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    rtor_client(conf.mk_rtorrent()),
     sched(1000),
-    torrents(rtor_client, sched),
+    torrents(conf.mk_rtorrent(), sched),
     worker(),
     search(new QLineEdit(this)),
     focus(sched)
@@ -112,11 +111,6 @@ void MainWindow::on_actionConnect_triggered(){
     dialog.exec();
 
     if(dialog.result() == QDialog::Accepted){
-        auto new_client = conf.mk_rtorrent();
-
-        // this client may be used by the torrent files dialog
-        rtor_client = new_client;
-
         emit update_client(conf.mk_rtorrent());
     }
 }
@@ -164,7 +158,7 @@ void MainWindow::show_details(QString hash)
     focus.disconnect();
     disconnect(run_fetch_all);
     
-    files_client<file_model_t> fc(rtor_client, hash);
+    files_client<file_model_t> fc(conf.mk_rtorrent(), hash);
 
     files_daemon_t fd(sched, fc);
     fd.moveToThread(&worker);

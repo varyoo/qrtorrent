@@ -33,7 +33,7 @@ SOURCES += \
     removedialog.cc \
     tablesortmodel.cc \
     tablemodel.cc \
-    rtorrent.cc \
+    rtor/rtorrent.cc \
     scheduler.cc \
     torrent_file.cc \
     files_impl.cc \
@@ -56,7 +56,7 @@ HEADERS += \
     removedialog.h \
     tablesortmodel.h \
     tablemodel.h \
-    rtorrent.h \
+    rtor/rtorrent.h \
     scheduler.h \
     torrent_file.h \
     files_client.h \
@@ -67,7 +67,8 @@ HEADERS += \
     content_view.h \
     focus.h \
     torrent.h \
-    torrent_list.h \
+    rtor/torrent_list.h \
+    rtor/torrent_list.cc \
     move_dialog.h \
     torrents_daemon.h
 

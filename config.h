@@ -4,7 +4,7 @@
 #include <QSettings>
 #include <memory>
 
-#include "rtorrent.h"
+#include "rtor/rtorrent.h"
 
 #include <xmlrpc-c/client.hpp>
 

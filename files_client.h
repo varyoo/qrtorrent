@@ -1,15 +1,17 @@
 #ifndef FILES_CLIENT_H
 #define FILES_CLIENT_H
 
-#include<vector>
-#include<memory>
-#include<xmlrpc-c/girerr.hpp>
-#include<xmlrpc-c/base.hpp>
-#include<xmlrpc-c/client.hpp>
-#include"config.h"
-#include"rtorrent.h"
-#include"scheduler.h"
-#include"torrent_file.h"
+#include <vector>
+#include <memory>
+
+#include "config.h"
+#include "rtor/rtorrent.h"
+#include "scheduler.h"
+#include "torrent_file.h"
+
+#include <xmlrpc-c/girerr.hpp>
+#include <xmlrpc-c/base.hpp>
+#include <xmlrpc-c/client.hpp>
 
 
 template<class file_model_t>

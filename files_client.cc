@@ -1,5 +1,6 @@
-#include"files_client.h"
-#include<QDebug>
+#include <QDebug>
+
+#include "files_client.h"
 
 
 template<class file_model_t>

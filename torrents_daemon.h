@@ -5,9 +5,11 @@
 #include <QObject>
 #include <QDebug>
 
-#include "rtorrent.h"
-#include "torrent_list.h"
-#include "torrent_list.cc"
+#include "rtor/rtorrent.h"
+#include "rtor/torrent_list.h"
+#include "rtor/torrent_list.cc"
+#include "scheduler.h"
+#include "torrent.h"
 
 
 class torrents_daemon : public QObject {
@@ -16,7 +18,7 @@ class torrents_daemon : public QObject {
 public:
     rtor::client_ptr client;
     scheduler &fetch_all_scheduler;
-    torrent_list<torrents_daemon> list;
+    rtor::torrent_list<torrents_daemon, Torrent> list;
 
 public:
     torrents_daemon(rtor::client_ptr rtor, scheduler &sched):
