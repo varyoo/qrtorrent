@@ -17,24 +17,12 @@ template<typename subscriber, typename torrent>
 class torrent_list {
 
 private:
-    static constexpr int interval = 1000;
-    std::vector<std::shared_ptr<torrent> > old;
+    std::vector<std::shared_ptr<torrent> > prev_list;
     xmlrpc_c::paramList fetch_all_params;
 
-public:
+private:
     rtor::client_ptr client;
-
-private:
     subscriber &subscription;
-
-private:
-    // needs heavy tests as i don't understand half of these
-    void remove_loop(std::vector<std::shared_ptr<torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
-    void insert_loop(std::vector<std::shared_ptr<torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
-    void equal_loop(std::vector<std::shared_ptr<torrent> > &ts,
-        const size_t &old_size, const size_t &new_size, size_t &j, size_t &i);
 
 public:
     torrent_list(rtor::client_ptr client, subscriber &sub):
@@ -44,6 +32,17 @@ public:
     {}
 
     void fetch_all();
+
+    void swap_client(rtor::client_ptr new_client){
+        // 1. remove all torrents from GUI
+        subscription.torrents_removed(0, prev_list.size());
+
+        // 2. remove all torrents
+        prev_list.clear();
+
+        // 3. connect to the new server
+        client = std::move(new_client);
+    }
 };
 
 } // rtor

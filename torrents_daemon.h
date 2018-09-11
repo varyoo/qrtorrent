@@ -34,8 +34,7 @@ public slots:
     }
 
     void swap_client(rtor::client_ptr new_client){
-        client = new_client;
-        list.client = new_client;
+        list.swap_client(new_client);
     }
 
     void move_downloads(std::vector<std::string> hashes, std::string dest, bool start){
