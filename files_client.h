@@ -6,7 +6,6 @@
 
 #include "config.h"
 #include "rtor/rtorrent.h"
-#include "scheduler.h"
 #include "torrent_file.h"
 
 #include <xmlrpc-c/girerr.hpp>

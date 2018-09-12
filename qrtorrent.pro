@@ -34,15 +34,12 @@ SOURCES += \
     tablesortmodel.cc \
     tablemodel.cc \
     rtor/rtorrent.cc \
-    scheduler.cc \
     torrent_file.cc \
     files_impl.cc \
-    files_daemon.cc \
     file_model.cc \
     details_dialog.cc \
     torrent_files_model.cc \
     content_view.cc \
-    focus.cc \
     torrent.cc \
     move_dialog.cpp
 
@@ -57,7 +54,6 @@ HEADERS += \
     tablesortmodel.h \
     tablemodel.h \
     rtor/rtorrent.h \
-    scheduler.h \
     torrent_file.h \
     files_client.h \
     files_daemon.h \
@@ -65,12 +61,12 @@ HEADERS += \
     details_dialog.h \
     torrent_files_model.h \
     content_view.h \
-    focus.h \
     torrent.h \
     rtor/torrent_list.h \
     rtor/torrent_list.cc \
     move_dialog.h \
-    torrents_daemon.h
+    torrents_daemon.h \
+    scheduler.h
 
 FORMS += \
     mainwindow.ui \

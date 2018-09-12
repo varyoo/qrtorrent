@@ -8,7 +8,6 @@
 #include "rtor/rtorrent.h"
 #include "rtor/torrent_list.h"
 #include "rtor/torrent_list.cc"
-#include "scheduler.h"
 #include "torrent.h"
 
 
@@ -17,20 +16,17 @@ class torrents_daemon : public QObject {
 
 public:
     rtor::client_ptr client;
-    scheduler &fetch_all_scheduler;
     rtor::torrent_list<torrents_daemon, Torrent> list;
 
 public:
-    torrents_daemon(rtor::client_ptr rtor, scheduler &sched):
+    torrents_daemon(rtor::client_ptr rtor):
         client(rtor),
-        fetch_all_scheduler(sched),
         list(client, *this)
     {}
     
 public slots:
     void fetch_all(){
         list.fetch_all();
-        fetch_all_scheduler.reschedule();
     }
 
     void swap_client(rtor::client_ptr new_client){

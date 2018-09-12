@@ -16,13 +16,11 @@ void client::cmd_for_hashes(std::vector<std::string> hashes, std::string cmd)
     }
 
     xmlrpc_c::paramList ps;
-    ps.add(xmlrpc_c::value_array(cmds));
-
-    xmlrpc_c::rpc req("system.multicall", ps);
+    xmlrpc_c::rpc req("system.multicall", ps.addc(cmds));
     call(req);
 }
 
-void client::append_cmd(xmlrpc_c::carray &cmds, std::string cmd, xmlrpc_c::carray &ps){
+void client::append_cmd(xmlrpc_c::carray &cmds, const std::string &cmd, const xmlrpc_c::carray &ps){
     cmds.push_back(xmlrpc_c::value_struct({
         {"methodName", xmlrpc_c::value_string(cmd)},
         {"params", xmlrpc_c::value_array(ps)}
@@ -44,7 +42,7 @@ std::string client::escape_shell_arg(std::string const &s)
     return escaped;
 }
 
-void client::move_data(std::vector<std::string> hashes, std::string dest_path)
+void client::move_data(std::vector<std::string> hashes, const std::string &dest_path)
 {
     xmlrpc_c::carray cmds;
 
@@ -56,10 +54,8 @@ void client::move_data(std::vector<std::string> hashes, std::string dest_path)
         append_cmd(cmds, "d.directory", params);
     }
 
-    xmlrpc_c::paramList callParams;
-    callParams.add(xmlrpc_c::value_array(cmds));
-    
-    xmlrpc_c::rpc req("system.multicall", callParams);
+    xmlrpc_c::paramList call_params;
+    xmlrpc_c::rpc req("system.multicall", call_params.addc(cmds));
     call(req);
 
     auto res = xmlrpc_c::value_array(req.getResult()).vectorValueValue();
@@ -78,13 +74,11 @@ void client::move_data(std::vector<std::string> hashes, std::string dest_path)
 
     sh << "exit 0";
 
-    xmlrpc_c::paramList mvParams;
-    mvParams.add(xmlrpc_c::value_string("sh"));
-    mvParams.add(xmlrpc_c::value_string("-c"));
-    mvParams.add(xmlrpc_c::value_string(sh.str()));
+    xmlrpc_c::paramList mv_params;
+    mv_params.addc("sh").addc("-c").addc(sh.str());
 
     // execute script on remote computer
-    xmlrpc_c::rpc sh_req("execute", mvParams);
+    xmlrpc_c::rpc sh_req("execute", mv_params);
     call(sh_req);
 }
 
@@ -108,9 +102,10 @@ void client::move_downloads(std::vector<std::string> hashes, std::string dest, b
         append_cmd(cmds, "d.directory.set", params);
     }
 
-    xmlrpc_c::paramList callParams;
-    callParams.add(xmlrpc_c::value_array(cmds));
-    xmlrpc_c::rpc req("system.multicall", callParams);
+    xmlrpc_c::paramList call_params;
+    call_params.addc(cmds);
+    
+    xmlrpc_c::rpc req("system.multicall", call_params);
     call(req);
 
     // 3: open torrents
@@ -118,7 +113,7 @@ void client::move_downloads(std::vector<std::string> hashes, std::string dest, b
 }
 
 // from https://stackoverflow.com/questions/15138353
-void client::loadFileInto(xmlrpc_c::cbytestring &bytes, std::string filename){
+void client::load_file(xmlrpc_c::cbytestring &bytes, const std::string &filename){
     // open the file:
     std::ifstream file(filename, std::ios::binary);
 
@@ -157,7 +152,7 @@ void client::add_files(std::vector<std::string> files, std::string dest, bool st
     
     for(const auto &filename : files){
         xmlrpc_c::cbytestring bytes;
-        loadFileInto(bytes, filename);
+        load_file(bytes, filename);
 
         xmlrpc_c::value_bytestring v(bytes);
         xmlrpc_c::carray load_params = {target, v, addtime};
@@ -178,8 +173,7 @@ void client::add_files(std::vector<std::string> files, std::string dest, bool st
             //qDebug() << "Add files: breaking down big multicall";
             
             xmlrpc_c::paramList call_params;
-            call_params.add(xmlrpc_c::value_array(cmds));
-            xmlrpc_c::rpc req("system.multicall", call_params);
+            xmlrpc_c::rpc req("system.multicall", call_params.addc(cmds));
             call(req);
             
             cmds.clear();
@@ -190,8 +184,7 @@ void client::add_files(std::vector<std::string> files, std::string dest, bool st
     }
 
     xmlrpc_c::paramList call_params;
-    call_params.add(xmlrpc_c::value_array(cmds));
-    xmlrpc_c::rpc req("system.multicall", call_params);
+    xmlrpc_c::rpc req("system.multicall", call_params.addc(cmds));
     call(req);
 }
 

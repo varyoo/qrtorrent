@@ -19,8 +19,6 @@ class torrent_list {
 private:
     std::vector<std::shared_ptr<torrent> > prev_list;
     xmlrpc_c::paramList fetch_all_params;
-
-private:
     rtor::client_ptr client;
     subscriber &subscription;
 
@@ -33,7 +31,7 @@ public:
 
     void fetch_all();
 
-    void swap_client(rtor::client_ptr new_client){
+    void swap_client(const rtor::client_ptr &new_client){
         // 1. remove all torrents from GUI
         subscription.torrents_removed(0, prev_list.size());
 

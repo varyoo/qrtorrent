@@ -2,9 +2,10 @@
 #define DETAILS_DIALOG_H
 
 #include <QDialog>
-#include"files_daemon.h"
-#include"focus.h"
-#include<QMetaObject>
+#include <QMetaObject>
+
+#include "files_daemon.h"
+#include "scheduler.h"
 
 
 namespace Ui {
@@ -16,22 +17,15 @@ class details_dialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit details_dialog(QWidget *parent, files_daemon_t&);
+    explicit details_dialog(QWidget *parent, files_daemon&);
     ~details_dialog();
 
 private:
     Ui::details_dialog *ui;
-    files_daemon_t &daemon;
-    focus_t focus;
-    QMetaObject::Connection run_fetch;
-
-    void focusInEvent(QFocusEvent*) override;
-    void focusOutEvent(QFocusEvent*) override;
-    void done(int r);
+    files_daemon &daemon;
 
 signals:
-    void focus_gained();
-    void focus_lost();
+    void fetch_run_once();
 };
 
 #endif // DETAILS_DIALOG_H

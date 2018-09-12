@@ -9,8 +9,8 @@
 
 #include "config.h"
 #include "rtor/rtorrent.h"
-#include "focus.h"
 #include "torrents_daemon.h"
+#include "scheduler.h"
 
 
 namespace Ui {
@@ -29,25 +29,24 @@ public:
 private:
     Ui::MainWindow *ui;
     Config conf{};
-    scheduler sched;
     torrents_daemon torrents;
     QThread worker;
     QLineEdit *search;
-    QMetaObject::Connection run_fetch_all;
-    focus_t focus;
-
-private:
-    void schedule_client();
-
+    scheduler torrents_schedule;
+    
 signals:
-    void aboutToQuit();
-    void finished();
+    void about_to_quit();
+    
     void add_torrents(QString dest_path, std::vector<std::string> filenames, bool start);
     void update_client(std::shared_ptr<rtor::client>);
+
+    void fetch_start();
+    void fetch_stop();
 
 private slots:
     void on_actionConnect_triggered();
     void on_actionOpen_triggered();
+    
     void show_details(QString hash);
 };
 

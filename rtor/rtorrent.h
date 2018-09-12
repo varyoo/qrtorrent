@@ -45,12 +45,15 @@ public:
     void add_files(std::vector<std::string> files, std::string path, bool start); 
     void move_downloads(std::vector<std::string> hashes, std::string dest, bool move_data);
 
-    static void append_cmd(xmlrpc_c::carray&, std::string, xmlrpc_c::carray&);
+    static void append_cmd(xmlrpc_c::carray &commands_dest,
+            const std::string &command,
+            const xmlrpc_c::carray &command_params);
+    
     static std::string escape_shell_arg(std::string const &shell_arg);
 
 private:
-    void move_data(std::vector<std::string> hashes, std::string to);
-    void loadFileInto(xmlrpc_c::cbytestring &bytes, std::string filename);
+    void move_data(std::vector<std::string> hashes, const std::string &to);
+    void load_file(xmlrpc_c::cbytestring &bytes, const std::string &filename);
 };
 
 typedef std::shared_ptr<client> client_ptr;

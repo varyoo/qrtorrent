@@ -1,24 +1,35 @@
 #ifndef FILES_DAEMON_H
 #define FILES_DAEMON_H
 
-#include"file_model.h"
-#include<vector>
-#include"files_client.h"
+#include <vector>
+#include <QDebug>
+
+#include "file_model.h"
+#include "files_client.h"
 
 
-typedef files_client<file_model_t> client_t;
+typedef files_client<file_model_t> fd_client;
 
-class files_daemon_t : public QObject
-{
-Q_OBJECT
-public:
-    files_daemon_t(scheduler &sched, client_t &client);
+class files_daemon : public QObject {
+    Q_OBJECT
+
 private:
-    client_t &client;
+    fd_client &client;
+
 public:
-    scheduler &sched;
+    files_daemon(fd_client &client):
+        client(client)
+    {}
+
 public slots:
-    void fetch();
+    void fetch(){
+        std::vector<std::shared_ptr<file_model_t> > files;
+        file_model_t *root;
+
+        root = client.fetch_into(files);
+        emit files_loaded(files, root);
+    }
+
 signals:
     void files_loaded(std::vector<std::shared_ptr<file_model_t> > files,
             file_model_t *root);
