@@ -65,8 +65,7 @@ HEADERS += \
     rtor/torrent_list.h \
     rtor/torrent_list.cc \
     move_dialog.h \
-    torrents_daemon.h \
-    scheduler.h
+    torrents_daemon.h
 
 FORMS += \
     mainwindow.ui \

@@ -17,8 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     torrents(conf.mk_rtorrent()),
     worker(),
-    search(new QLineEdit(this)),
-    torrents_schedule(1000)
+    search(new QLineEdit(this))
 {
     ui->setupUi(this);
     qDebug() << "Using configuration file" << conf.fileName();
@@ -35,13 +34,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionOpen->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
     
     torrents.moveToThread(&worker);
-    torrents_schedule.moveToThread(&worker);
 
     // stop the worker thread
     connect(this, &MainWindow::about_to_quit,
-            &torrents_schedule, &scheduler::finish);
-    connect(&torrents_schedule, &scheduler::finished,
-            &worker, &QThread::quit, Qt::DirectConnection);
+            &worker, &QThread::quit);
 
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
     qRegisterMetaType<std::string>("std::string");
@@ -80,15 +76,19 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->tableView, &Table::removeTorrents);
 
     // fetch schedule
-    connect(&torrents_schedule, &scheduler::run_fetch,
-            &torrents, &torrents_daemon::fetch_all,
-            Qt::DirectConnection);
-    connect(this, &MainWindow::fetch_start,
-            &torrents_schedule, &scheduler::start);
     connect(this, &MainWindow::fetch_stop,
-            &torrents_schedule, &scheduler::stop);
+            &torrents, &torrents_daemon::stop);
+    connect(this, &MainWindow::fetch_start,
+            &torrents, &torrents_daemon::start);
+
+    // single shot fetch
+    connect(this, &MainWindow::fetch_now,
+            &torrents, &torrents_daemon::fetch_all);
 
     worker.start();
+
+    // load the list for the first time
+    fetch_now();
 }
 
 MainWindow::~MainWindow()
@@ -113,7 +113,7 @@ void MainWindow::changeEvent(QEvent *event)
     
     if(event->type() == QEvent::ActivationChange){
         if(this->isActiveWindow()){
-            emit fetch_start();
+            emit fetch_start(1000); // every second
         } else {
             emit fetch_stop();
         }
@@ -147,8 +147,7 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::show_details(QString hash)
 {
-    // stop the torrents timer
-    emit fetch_stop();
+    // the timer will be stopped when the dialog will steal the focus
     
     files_client<file_model_t> client(conf.mk_rtorrent(), hash);
 

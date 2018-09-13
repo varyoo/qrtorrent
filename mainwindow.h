@@ -10,7 +10,6 @@
 #include "config.h"
 #include "rtor/rtorrent.h"
 #include "torrents_daemon.h"
-#include "scheduler.h"
 
 
 namespace Ui {
@@ -32,7 +31,6 @@ private:
     torrents_daemon torrents;
     QThread worker;
     QLineEdit *search;
-    scheduler torrents_schedule;
     
 signals:
     void about_to_quit();
@@ -40,8 +38,10 @@ signals:
     void add_torrents(QString dest_path, std::vector<std::string> filenames, bool start);
     void update_client(std::shared_ptr<rtor::client>);
 
-    void fetch_start();
+    void fetch_start(int interval);
     void fetch_stop();
+
+    void fetch_now();
 
 private slots:
     void on_actionConnect_triggered();

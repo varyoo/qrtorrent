@@ -5,7 +5,6 @@
 #include <QMetaObject>
 
 #include "files_daemon.h"
-#include "scheduler.h"
 
 
 namespace Ui {

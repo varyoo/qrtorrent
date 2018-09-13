@@ -4,6 +4,7 @@
 #include <vector>
 #include <QObject>
 #include <QDebug>
+#include <QTimerEvent>
 
 #include "rtor/rtorrent.h"
 #include "rtor/torrent_list.h"
@@ -17,6 +18,9 @@ class torrents_daemon : public QObject {
 public:
     rtor::client_ptr client;
     rtor::torrent_list<torrents_daemon, Torrent> list;
+
+private:
+    int timer_id;
 
 public:
     torrents_daemon(rtor::client_ptr rtor):
@@ -51,6 +55,20 @@ public slots:
 
     void add_torrents(QString dest_path, std::vector<std::string> filenames, bool start){
         client->add_files(filenames, dest_path.toStdString(), start);
+    }
+
+    void timerEvent(QTimerEvent *e) override {
+        Q_ASSERT(e->timerId() == timer_id);
+        fetch_all();
+    }
+
+    void start(int interval){
+        timer_id = startTimer(interval);
+        Q_ASSERT(timer_id != 0);
+    }
+
+    void stop(){
+        killTimer(timer_id);
     }
 
 signals:
