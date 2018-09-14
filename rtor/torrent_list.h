@@ -39,7 +39,7 @@ public:
         prev_list.clear();
 
         // 3. connect to the new server
-        client = std::move(new_client);
+        client = new_client;
     }
 };
 

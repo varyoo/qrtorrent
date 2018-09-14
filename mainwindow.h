@@ -48,6 +48,8 @@ private slots:
     void on_actionOpen_triggered();
     
     void show_details(QString hash);
+
+    void print_error(const QString &error);
 };
 
 #endif // MAINWINDOW_H

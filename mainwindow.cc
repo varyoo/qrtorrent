@@ -85,6 +85,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, &MainWindow::fetch_now,
             &torrents, &torrents_daemon::fetch_all);
 
+    // torrent list errors on status bar
+    connect(&torrents, &torrents_daemon::failure,
+            this, &MainWindow::print_error);
+
     worker.start();
 
     // load the list for the first time
@@ -158,4 +162,8 @@ void MainWindow::show_details(QString hash)
     d.exec();
 
     // the timer will start again when focus is reached
+}
+
+void MainWindow::print_error(const QString &error){
+    statusBar()->showMessage(error);
 }

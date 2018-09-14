@@ -30,7 +30,11 @@ public:
     
 public slots:
     void fetch_all(){
-        list.fetch_all();
+        try {
+            list.fetch_all();
+         } catch(std::exception &e){
+            emit failure(QString("Can't fetch torrent list: %1").arg(e.what()));
+        }
     }
 
     void swap_client(rtor::client_ptr new_client){
@@ -72,9 +76,12 @@ public slots:
     }
 
 signals:
+    // rtor::torrent_list subscriber type
     void torrent_changed(int, std::shared_ptr<Torrent> t);
     void torrents_inserted(int, std::vector<std::shared_ptr<Torrent> >);
     void torrents_removed(int, int);
+
+    void failure(const QString &error);
 };
 
 #endif // RTORRENT_WORKER
